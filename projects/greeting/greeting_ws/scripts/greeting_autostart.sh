@@ -9,8 +9,8 @@
 #   5) greeting_voice    speak_action_server    —— /greeting/speak 动作服务端（编排层语音播报）
 #   6) greeting_orchestrator orchestrator_node  —— 讲稿状态机（动作 + 语音同步）
 #
-#   说明：只起 speak_action_server，不起 voice_greet_tts_node（后者同样监听 G+A/B/C/D，
-#         会与 joy_mapper 的 goto:<段号> 撞车）；用 with_voice:=false 可关闭语音服务端。
+#   说明：语音侧只起 speak_action_server（编排层播报）与 simple_action_voice_node；
+#         用 with_voice:=false 可关闭语音服务端。
 #
 # 手柄操作（默认映射见 src/greeting_teleop/config/teleop_map.yaml）：
 #   先把 E 三档开关拨到「上」激活组合键，再按 A / B / C 触发 鞠躬 / 挥手 / 拍照；

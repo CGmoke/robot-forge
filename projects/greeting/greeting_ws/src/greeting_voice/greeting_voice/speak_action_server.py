@@ -16,8 +16,8 @@
 🔴 audio_id 必须是 audio_config 中开启 "stop": true 的文本型实体（默认 audio_guide）；
    纯 stop 不带 audio_id 会被平台忽略（"stop requires audio_id"），音频会播完。
 
-与 voice_greet_tts_node 的区别：
-    · voice_greet_tts_node = 遥控器按键【人工】触发播报；
+与 simple_action_voice_node 的区别：
+    · simple_action_voice_node = 遥控器按键【人工】触发播报；
     · 本节点 = 编排层动作驱动【自动】播报，供"动作比语音早 1s/3s 触发"的时序编排使用。
     两者共用同一 TTS 服务，可同时运行（append 会排队）。
 

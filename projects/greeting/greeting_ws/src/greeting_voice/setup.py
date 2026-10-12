@@ -18,11 +18,10 @@ setup(
     zip_safe=True,
     maintainer='voice-owner-B',
     maintainer_email='dev@x-humanoid-cloud.com',
-    description='天轶 2.5 迎宾语音包：遥控器 G 左/右拨 + A/B/C/D 键触发 TTS 播报',
+    description='天轶 2.5 迎宾语音包：平台简单动作模式按键语音 + 编排层 /greeting/speak 语音服务端',
     license='Apache-2.0',
     entry_points={
         'console_scripts': [
-            'voice_greet_tts_node = greeting_voice.voice_greet_tts_node:main',
             'speak_action_server = greeting_voice.speak_action_server:main',
             'simple_action_voice_node = greeting_voice.simple_action_voice_node:main',
         ],

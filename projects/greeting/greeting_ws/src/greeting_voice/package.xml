@@ -4,7 +4,7 @@
 <package format="3">
   <name>greeting_voice</name>
   <version>0.1.0</version>
-  <description>天轶 2.5 迎宾语音包：遥控器 G 左/右拨 + A/B/C/D 键触发 TTS 播报</description>
+  <description>天轶 2.5 迎宾语音包：平台简单动作模式按键语音 + 编排层 /greeting/speak 语音服务端</description>
   <maintainer email="dev@x-humanoid-cloud.com">voice-owner-B</maintainer>
   <license>Apache-2.0</license>
 

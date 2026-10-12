@@ -11,10 +11,9 @@
                                           的语音播报（与平台动作回放并行，序号一一对应）
   7) greeting_orchestrator/orchestrator.launch.py 编排层状态机（讲稿 cue：动作与语音同步）
 
-注：只起 greeting_voice 的 speak_action_server 与 simple_action_voice_node，
-    【不】起 voice_greet_tts_node —— 后者同样监听 /sbus_data/event 的 G+A/B/C/D
-    （默认播报"预留N"），会与 joy_mapper 的 goto:<段号> 撞车、并盖过讲稿语音。
-    simple_action_voice_node 监听的是 H 档位，与 joy_mapper（E 档位）不冲突。
+注：greeting_voice 只起 speak_action_server 与 simple_action_voice_node。
+    simple_action_voice_node 监听的是 H 档位，与 joy_mapper（E 档位）不冲突；
+    讲稿按键播报统一走 joy_mapper 的 goto:<段号> -> 编排层 -> speak_action_server。
 
 数据流：
   /sbus_data/event ─joy_mapper─> /greeting/panel_command ─panel_command_bridge─> /greeting/play_motion
@@ -27,11 +26,10 @@
 
 手柄按键（组合键：先拨前提开关，再按 A/B/C/D）：
   H 右   = stop  （停止并回到 IDLE，安全键）
-  E上+A/B/C = 单动作 salute_bow / wave_official / photo_pose
-  G左+A/B/C/D = 第 1/2/3/4 段     G右+A/B/C = 第 5/6/7 段
+  E上+A/B/C/D = 第 1/2/3/4 段     E下+A/B/C = 第 5/6/7 段
               （分段点播 goto:<段号>：只播该段，播完回 IDLE，不续播）
   注：整段连播 start（一键走完 7 段，动作比语音提前 1s/3s，由讲稿 lead_s 决定）
-      当前未绑定按键 —— 原 D 已改作分段键（G左 + D = 第 4 段），
+      当前未绑定按键 —— 原 D 已改作分段键（E上 + D = 第 4 段），
       如需保留可在 teleop_map.yaml 的 keys: 另择一键置为 start（如 f_up: start）。
 
 用法：

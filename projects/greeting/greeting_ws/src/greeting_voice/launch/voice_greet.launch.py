@@ -1,10 +1,9 @@
 """greeting_voice 启动入口：语音迎宾播报节点。
 
-三条语音链路：
-  1) voice_greet_tts_node  —— 遥控器 G 左/右拨 + A/B/C/D 键【人工】触发播报；
-  2) simple_action_voice_node —— 平台「简单动作模式」H 右拨 + 连按 B×N + 短按 A
+两条语音链路：
+  1) simple_action_voice_node —— 平台「简单动作模式」H 右拨 + 连按 B×N + 短按 A
                                 【人工】触发播报（与平台动作回放并行，序号一一对应）；
-  3) speak_action_server   —— /greeting/speak 动作服务端，供【编排层自动】驱动播报
+  2) speak_action_server   —— /greeting/speak 动作服务端，供【编排层自动】驱动播报
                               （支撑"动作比语音早 1s/3s 触发"的时序编排）。
 """
 
@@ -26,7 +25,7 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'params_file',
             default_value=default_params,
-            description='语音节点参数文件（含 voice_greet_tts_node / simple_action_voice_node 两段）'),
+            description='语音节点参数文件（含 simple_action_voice_node 参数段）'),
         DeclareLaunchArgument(
             'dry_run',
             default_value='false',
@@ -39,16 +38,6 @@ def generate_launch_description():
             'simple_action_voice',
             default_value='true',
             description='是否随之启动 H右+B×N+A 简单动作语音节点'),
-        Node(
-            package='greeting_voice',
-            executable='voice_greet_tts_node',
-            name='voice_greet_tts_node',
-            output='screen',
-            parameters=[
-                LaunchConfiguration('params_file'),
-                {'dry_run': LaunchConfiguration('dry_run')},
-            ],
-        ),
         Node(
             package='greeting_voice',
             executable='simple_action_voice_node',

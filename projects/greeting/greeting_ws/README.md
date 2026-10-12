@@ -260,9 +260,9 @@ ros2 launch greeting_teleop teleop.launch.py monitor:=true
 
 > 🔴 全流程命令（`start` / `goto:<段号>`）需要 `greeting_orchestrator` 在运行才有消费方（`greeting_bringup.launch.py` 默认已包含）。
 
-**按键触发语音（TTS，`greeting_voice`）**：`greeting_bringup.launch.py` 只起
-`simple_action_voice_node`（`H` 右拨 + 连按 `B`×N + 短按 `A` → 播第 N 句，配合平台「简单动作模式」）；
-`voice_greet_tts_node`（`G` 左/右拨 + `A/B/C/D` → 播对应文本）需单独启动。详见
+**按键触发语音（TTS，`greeting_voice`）**：`greeting_bringup.launch.py` 起
+`simple_action_voice_node`（`H` 右拨 + 连按 `B`×N + 短按 `A` → 播第 N 句，配合平台「简单动作模式」）
+与 `speak_action_server`（讲稿分段点播：`E` 上/下拨 + `A/B/C/D` → `goto:<段号>` 经编排层驱动）。详见
 [greeting_voice/README.md](src/greeting_voice/README.md)。
 
 > ⚠️ 以上按键链路依赖平台 SBUS 事件（`/sbus_data/event`），属于实机功能；
@@ -352,7 +352,7 @@ curl -s http://192.168.11.10:9090/api/core/system/v1/robot/health
 停止后可能残留节点进程，需手动清理：
 
 ```bash
-pgrep -af "orchestrator_node|motion_server|navigate_to_server|speak_action_server|simple_action_voice_node|voice_greet_tts_node|joy_mapper|panel_command_bridge|flow_command_bridge"
+pgrep -af "orchestrator_node|motion_server|navigate_to_server|speak_action_server|simple_action_voice_node|joy_mapper|panel_command_bridge|flow_command_bridge"
 # 按 PID 逐个终止（注意：勿用 killall/pkill，避免误杀其他 ROS 进程）
 kill <PID> [<PID> ...]
 ```

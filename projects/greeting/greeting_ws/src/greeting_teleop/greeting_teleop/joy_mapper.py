@@ -48,20 +48,15 @@ button_* 状态字段语义（仅作 monitor 观察，不用于触发）：
        guards:
          - key: e_up          # 前提：E 三档开关在"上"
            release: manual    # 前提解除时下发（可选）：中止正在播放的动作
-           keys:
-             a: motion:salute_bow
-             b: motion:wave_official
-             c: motion:photo_pose
-         - key: g_left        # 前提：G 拨到"左"
-           keys: {a: 'goto:1', b: 'goto:4', c: 'goto:7'}
-         - key: g_mid         # 前提：G 拨到"中"
-           keys: {a: 'goto:2', b: 'goto:5'}
-         - key: g_right       # 前提：G 拨到"右"
-           keys: {a: 'goto:3', b: 'goto:6'}
-   判定依据为事件值（KEY_E_UP / KEY_G_LEFT …），不依赖 button_* 状态位
+           keys: {a: 'goto:1', b: 'goto:2', c: 'goto:3', d: 'goto:4'}
+         - key: e_down        # 前提：E 三档开关在"下"
+           keys: {a: 'goto:5', b: 'goto:6', c: 'goto:7'}
+       keys:                  # 前提都不生效时回退的常驻键表
+         h_right: stop
+   判定依据为事件值（KEY_E_UP / KEY_E_DOWN …），不依赖 button_* 状态位
    （官方文档未说明其 1/2 哪端为"上"）。同一开关族内各组互斥；不同族可并存，
-   靠列表顺序定优先级（故把"单动作组"排在前，E 不在"上"时才落到 G 分段组）。
-   ⚠️ 三档开关【总有一档在生效】，因此 G 组在某档位会持续生效（上电首次拨动 G 后）。
+   靠列表顺序定优先级。
+   ⚠️ 三档开关【总有一档在生效】，因此该组在某档位会持续生效（上电首次拨动开关后）。
    前提默认【未生效】，上电后需先拨动对应开关才会激活该组。
 
 参数：
