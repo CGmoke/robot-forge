@@ -53,21 +53,15 @@ source install/setup.bash
 
 ## 运行
 
-`voice_greet.launch.py` 一次启动 `simple_action_voice_node` + `speak_action_server`：
+两个节点由 `greeting_teleop/greeting_bringup.launch.py` 一键拉起（`with_voice` / `with_simple_action_voice` 控制）；
+本包不带 launch 入口，需要单独起节点时：
 
 ```bash
-# 正常播报
-ros2 launch greeting_voice voice_greet.launch.py
-
-# 无硬件干跑（只打日志，不调 TTS，用于确认按键链路）
-ros2 launch greeting_voice voice_greet.launch.py dry_run:=true
-
-# 只起按键语音、不起 /greeting/speak 动作服务端
-ros2 launch greeting_voice voice_greet.launch.py speak_server:=false
-
-# 单独跑某节点
 ros2 run greeting_voice simple_action_voice_node
 ros2 run greeting_voice speak_action_server
+
+# 无硬件干跑（只打日志，不调 TTS，用于确认按键链路）
+ros2 run greeting_voice simple_action_voice_node --ros-args -p dry_run:=true
 ```
 
 ## 接口清单

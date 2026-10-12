@@ -291,8 +291,7 @@ ros2 launch greeting_nav navigate_to.launch.py
 ros2 launch greeting_orchestrator orchestrator.launch.py
 ```
 
-> 需要遥控按键链路时，另起 `ros2 launch greeting_teleop teleop.launch.py`；
-> 需要语音播报时，另起 `ros2 launch greeting_voice voice_greet.launch.py`。
+> 需要遥控按键链路时，另起 `ros2 launch greeting_teleop teleop.launch.py`。
 
 > `greeting_body` 默认读取 `share/greeting_body/config/motions.yaml`（**已含讲稿用到的全部 8 个动作**），
 > 因此**无需**再传 `-p motions_file:=...` 覆盖。

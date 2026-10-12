@@ -125,7 +125,7 @@ greeting_interfaces ──（所有包的接口依赖，最底层）
 | `ros2 launch greeting_teleop greeting_bringup.launch.py` | **一键全链路**：动作服务端 + 手柄网关 + 两个桥 + 语音 + 编排层 | greeting_teleop |
 | `ros2 launch greeting_body motion.launch.py [speed_limit:=0.5]` | 实机上半身动作服务端（`/greeting/play_motion`） | greeting_body |
 | `ros2 launch greeting_nav navigate_to.launch.py [dry_run:=true]` | 实机底盘 REST 导航服务端（`/greeting/navigate_to`） | greeting_nav |
-| `ros2 launch greeting_voice voice_greet.launch.py [dry_run:=true]` | 遥控按键语音播报（TTS） | greeting_voice |
+| `ros2 run greeting_voice speak_action_server` / `simple_action_voice_node` | 语音播报服务端 / 简单动作语音（已含在一键全链路内，需要单跑时用） | greeting_voice |
 | `ros2 launch greeting_teleop teleop.launch.py [monitor:=true]` | 仅手柄按键网关（按键标定） | greeting_teleop |
 | `ros2 launch greeting_orchestrator orchestrator.launch.py` | 迎宾状态机（单独启动） | greeting_orchestrator |
 
