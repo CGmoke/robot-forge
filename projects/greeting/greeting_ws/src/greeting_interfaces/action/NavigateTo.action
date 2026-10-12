@@ -1,10 +1,10 @@
 # goal
-string waypoint          # 点位名，查 config/waypoints.yaml
-float32 timeout_s 
+string waypoint           # 点位名，查 config/waypoints.yaml
+float32 timeout_s         # 超时时间，单位秒
 ---
 # result
-bool success
-string message
+bool success              #运行结果
+string message            #消息
 ---
 # feedback
 string phase             # navigating | arrived | retrying | relocalizing
