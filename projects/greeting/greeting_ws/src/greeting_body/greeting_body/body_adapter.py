@@ -47,16 +47,14 @@ from ros2_bridge_msgs.msg import ArmCtrl, HeadCtrl, MotorCtrl, RobotState, Waist
 from std_msgs.msg import Header
 
 #: 控制模式（见 ArmCtrl/HeadCtrl/WaistCtrl.msg 注释）：0=位置 1=力位混合 2=速度 ...
-#: 天轶 2.5 官方实现（Garden_task/zev/body_control/cpp_joint_controller/
 #: tianyi_25_transport.cpp）一律使用 mode=0 位置模式，且 kp=kd=0.0、tor=0.0，
 #: 只下发 pos/spd/cur —— 即增益由驱动器内部决定，SDK 不传增益。
-MODE_POSITION = 0
-MODE_HYBRID = 1
-#: SDK 模式移交魔数：首次以 reserved=165 下发，驱动器才接受 SDK 位置命令
-RESERVED_SDK = 165
+MODE_POSITION = 0   # 位置模式
+MODE_HYBRID = 1   # 力位混合模式
+RESERVED_SDK = 165  #: SDK 模式移交魔数：首次以 reserved=165 下发，驱动器才接受 SDK 位置命令
 
 #: 手臂力位混合增益（沿用 xos/joystick joint_control_service.py 的 xmigcs 持有态，
-#: 保证动作前后刚度连续、无冲击）。Kd 提供阻尼，抑制粘滑颤振。
+#: 保证动作前后刚度连续、无冲击。Kd 提供阻尼，抑制粘滑颤振。
 #: 顺序 = 肩pitch/肩roll/肩yaw/肘pitch/肘yaw/腕pitch/腕roll（左右臂同序）。
 ARM_KP_HYBRID = (300.0, 300.0, 200.0, 300.0, 100.0, 100.0, 100.0)
 ARM_KD_HYBRID = (15.0, 15.0, 15.0, 15.0, 5.0, 5.0, 5.0)
@@ -180,6 +178,7 @@ class BodyAdapter:
 
     # ---------------------------------------------------------------- 载入与校验
     def _load_joint_map(self, path: str) -> None:
+        """载入关节映射配置文件。"""
         cfg = yaml.safe_load(open(path, "r", encoding="utf-8"))
         limits = cfg.get("limits", {})
         groups_raw = cfg.get("groups", {})
@@ -226,6 +225,7 @@ class BodyAdapter:
 
     # ---------------------------------------------------------------- 反馈解析
     def _on_robot_state(self, msg: RobotState) -> None:
+        """解析 /robot_state 消息，更新关节反馈。"""
         with self._lock:
             for part in (msg.head, msg.waist, msg.arm, msg.leg):
                 for st in part.status:
@@ -235,6 +235,7 @@ class BodyAdapter:
             self._state_count += 1
 
     def has_feedback(self) -> bool:
+        """判断是否有反馈。"""
         with self._lock:
             return self._state_count > 0
 
@@ -443,6 +444,7 @@ class BodyAdapter:
         return True
 
     def _make_msg(self, group: str, ctrls: List[MotorCtrl], hybrid: bool = False):
+        """根据 ctrls 制作 MotorCtrl 消息。"""
         msg = _MSG_TYPES[group]()
         msg.header = Header()
         msg.header.stamp = self._node.get_clock().now().to_msg()
@@ -455,14 +457,17 @@ class BodyAdapter:
 
     # ---------------------------------------------------------------- 便捷方法
     def group_joints(self, group: str) -> List[str]:
+        """获取指定分组的所有关节。"""
         return [s.joint for s in self._groups.get(group, [])]
 
     @property
     def publish_rate_hz(self) -> float:
+        """获取发布频率。"""
         return self._rate
 
     @property
     def arm_control_mode(self) -> int:
+        """获取臂控制模式。"""
         return self._arm_mode
 
     @property

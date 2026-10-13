@@ -88,7 +88,7 @@ greeting_orchestrator/
 | 话题 | 类型 | QoS | 频率 | 说明 |
 | --- | --- | --- | --- | --- |
 | `/greeting/state` | `std_msgs/String` | `reliable` / depth 1 / 🔴 `transient_local` | 状态变化时 | 状态机当前状态 |
-| `/greeting/health` | `SubsystemHealth` | `reliable` / 10 | 1 Hz | 子系统健康 |
+| `/greeting/health` | `SubsystemHealth` | `reliable` / 10 | 1 Hz | 实机子系统健康自检（字段映射见 §4.6） |
 
 ### 3.3 服务
 
@@ -188,6 +188,33 @@ segments[i].steps[j]
 | `EVENT_END` | 中止 pending，置 `IDLE` |
 | `EVENT_LEADER_ARRIVED` | 🔴 仅日志提示，**不自动接待**（契约 §5.1） |
 | `EVENT_LEADER_LEAVE` | 仅日志提示 |
+
+### 4.6 健康上报（`/greeting/health`，1 Hz）
+
+`_publish_health` 在**实机**下做真实自检，信号来源对应规划方案 §7.7 的分层守护：
+
+| 字段 | 实机信号 | 判定 |
+| --- | --- | --- |
+| `robot_control_alive` | `count_publishers("/robot_state")`（L1） | ≥1 → `True`；`robot_control` 会静默退出，退出后该话题无发布者 |
+| `arm_cmd_has_subscriber` | `count_subscribers("/arm/cmd")`（L2） | ≥1 → `True`；无订阅者时命令被**静默丢弃** |
+| `audio_ok` | `/greeting/speak` 服务端是否就绪（L4） | 就绪 → `True`（TTS 链路入口可用） |
+| `script_version_ok` | 讲稿版本与 `approved_script_version` 比对结果（L5） | 一致 → `True`（加载 / `reload_script` 时给出） |
+| `chassis_rest_ok` | —（L3） | 恒 `False`：底盘**未接入监测**，非故障 |
+| `slam_status` | —（L3） | 恒 `0`：底盘未接入监测 |
+| `dtc_level` | —（L6） | 恒 `0`：底盘未接入监测 |
+| `detail` | 人读摘要 | 例：`real: body=ok audio=ok script=ok channels=missing[/waist/cmd] chassis=unmonitored` |
+
+- `channels=missing[...]` 逐个列出 `/head/cmd`、`/arm/cmd`、`/waist/cmd` 中缺订阅者的通道；
+  `arm_cmd_has_subscriber` 只反映 `/arm/cmd`（动作硬预检的门禁通道），其余通道状态看 `detail`。
+
+> 🔴 **底盘三字段是"未监测"而非"正常"**：当前 `greeting_autostart.sh → greeting_bringup.launch.py`
+> 链路未包含 `greeting_nav`（底盘 REST :9090 服务端），故不查底盘，以 `detail` 的
+> `chassis=unmonitored` 为准。将来接入时需注意：同步 HTTP 查询会阻塞单线程执行器上的 `_tick`，
+> 必须改用 `MultiThreadedExecutor` 或后台线程。
+>
+> 🔴 **契约归属**：《接口契约冻结表》§10 规定实机 `/greeting/health` 的实现 Owner 是独立包
+> `greeting_health`（守护与自愈）。本包的发布当前是"就地版"；`greeting_health` 落地后，
+> 本节点应改为不发布或仅仿真发布，避免两个发布者抢同一话题。
 
 ---
 
@@ -293,8 +320,11 @@ ros2 node info /greeting_orchestrator
 ros2 topic list | grep greeting
 rqt_graph
 
-# 服务端是否在线（对应 /greeting/health 的三个布尔）
-ros2 action list | grep greeting
+# 实机健康自检：核对 /greeting/health 各字段与本体通道状态（字段映射见 §4.6）
+ros2 topic echo /greeting/health
+ros2 topic info /robot_state      # Publisher count ≥ 1 → robot_control_alive 应为 true
+ros2 topic info /arm/cmd          # Subscription count ≥ 1 → arm_cmd_has_subscriber 应为 true
+ros2 action list | grep greeting  # /greeting/speak 在 → audio_ok 应为 true
 ros2 node list
 
 # 手动单测某个 Action 服务端
@@ -311,6 +341,9 @@ ros2 action send_goal /greeting/play_motion greeting_interfaces/action/PlayMotio
 | `reload_script` 失败 | 讲稿 `version` ≠ `approved_script_version` | 对齐版本号或改参数 |
 | `/greeting/state` 收不到 | 订阅端 QoS 未用 `transient_local` | 订阅端声明 `TRANSIENT_LOCAL`/depth 1 |
 | 讲稿版本被推断成 double | launch 未指定 `value_type=str` | 见 §6.1 注意 |
+| `arm_cmd_has_subscriber=false` / `channels=missing[/arm/cmd]` | 平台未完成自检，`/arm/cmd` 尚无订阅者，动作会被静默丢弃 | 先按手柄 A 完成自检，待 `robot_control` 使能（`ros2 topic info /arm/cmd` 的 Subscription count ≥ 1） |
+| `robot_control_alive=false` | `robot_control` 未运行或已静默退出 | `ps aux \| grep robot_control` 确认；重启平台栈后再看 `/greeting/health` |
+| `/greeting/health` 的 `chassis_*` 看似异常 | 底盘字段**未接入监测**，恒为占位值 | 以 `detail` 的 `chassis=unmonitored` 为准，不代表底盘故障（见 §4.6） |
 
 ---
 
@@ -320,10 +353,13 @@ ros2 action send_goal /greeting/play_motion greeting_interfaces/action/PlayMotio
 - 🔴 `speed_scale` 在编排层与动作服务端**各钳一次**（双层兜底，礼仪硬要求）。
 - 🔴 讲稿是**审核对象**，修改后须同步 `approved_script_version`。
 - 编排层只依赖 `/greeting/*` 接口契约，不关心各 Action 服务端的具体实现。
+- 🔴 `/greeting/health` 的底盘三字段当前恒为"未监测"占位值（见 §4.6），**不代表底盘正常**；
+  底盘连通性与定位以 `greeting_nav` 的 Pre-flight（`get_robot_health()` / `get_pose()`）为准。
 
 ---
 
 ## 9. 相关文档
 
-- [《接口契约冻结表》v1.0](../../接口契约冻结表.md) §1 / §3 / §5 / §6 / §8
+- [《接口契约冻结表》v1.2](../../接口契约冻结表.md) §1 / §3 / §5 / §6 / §8 / §10
+- [《酒店迎宾项目规划方案》](../../酒店迎宾项目规划方案.md) §7.7（健康守护分层，见 §4.6）
 - [greeting_interfaces/README.md](../greeting_interfaces/README.md)

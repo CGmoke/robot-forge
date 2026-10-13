@@ -48,7 +48,7 @@ from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
 
-from greeting_nav.chassis_client import (ChassisClient, ChassisNavError,
+from repo.projects.greeting.greeting_ws.src.greeting_nav.greeting_nav.chassis_client import (ChassisClient, ChassisNavError,
                                          MOVE_WITH_THETA, NavError)
 
 #: 动作状态里出现这些词（小写）即判为「显式失败」（保守策略，见模块 docstring）

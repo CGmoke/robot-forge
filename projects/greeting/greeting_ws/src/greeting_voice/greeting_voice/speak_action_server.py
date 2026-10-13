@@ -91,21 +91,24 @@ class SpeakActionServer(Node):
 
     # ---------------------------------------------------------------- 回调
     def _on_goal(self, goal_request: Speak.Goal) -> GoalResponse:
+        """处理目标请求。"""
         if not goal_request.text:
             self.get_logger().warn("拒绝空文本的 Speak 目标")
             return GoalResponse.REJECT
         return GoalResponse.ACCEPT
 
     def _on_cancel(self, _goal_handle) -> CancelResponse:
+        """处理取消请求。"""
         return CancelResponse.ACCEPT
 
     def _execute(self, goal_handle) -> Speak.Result:
+        """执行播报目标。"""
         req = goal_handle.request
         text = req.text
         if req.interrupt:
             # 契约 §5.3 的 interrupt=true：带 audio_id 下发 stop 打断当前播报，再排队新文本
             self.get_logger().info("interrupt=true：先打断当前播报再排队新文本")
-            self._stop_tts()
+            self._stop_tts() # 带 audio_id 下发 stop，打断当前播报
 
         if not self._cli.wait_for_service(timeout_sec=self._timeout):
             self.get_logger().error(f"TTS 服务 {self._tts} 未就绪，播报目标中止")

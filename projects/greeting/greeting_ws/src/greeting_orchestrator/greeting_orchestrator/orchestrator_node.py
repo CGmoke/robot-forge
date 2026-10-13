@@ -50,21 +50,27 @@ from rclpy.qos import (
 )
 from std_msgs.msg import String
 
-# 礼仪硬要求（契约 §6）：动作幅度统一 ≤ 0.7，编排层先钳一次
+# 礼仪硬要求：动作幅度统一 ≤ 0.7，编排层先钳一次
 MOTION_SPEED_LIMIT = 0.7
 # 处于"正在执行讲稿"的基准状态；讲稿各段 name 在加载时动态并入
 BASE_RUNNING_STATES = {"RUNNING"}
 
+# 实机本体话题
+ROBOT_STATE_TOPIC = "/robot_state"                          # robot_control 发布，有发布者即进程存活
+BODY_CMD_TOPICS = ("/head/cmd", "/arm/cmd", "/waist/cmd")   # 命令无订阅者会被静默丢弃
+ARM_CMD_TOPIC = "/arm/cmd"                                  # 动作硬预检的门禁通道
+
 
 class GreetingOrchestrator(Node):
+    """迎宾编排层节点"""
     def __init__(self) -> None:
-        super().__init__("greeting_orchestrator")
-        self.declare_parameter("config_file", "")
-        self.declare_parameter("state_topic", "/greeting/state")
-        self.declare_parameter("default_nav_timeout", 60.0)
-        self.declare_parameter("approved_script_version", "1.1")
-        #: cue 步骤未显式写 lead_s 时，动作相对语音的默认提前量(s)
-        self.declare_parameter("default_motion_lead_s", 3.0)
+        """初始化节点"""
+        super().__init__("greeting_orchestrator")                 # 节点名
+        self.declare_parameter("config_file", "")                 # 配置文件路径
+        self.declare_parameter("state_topic", "/greeting/state")  # 状态发布主题
+        self.declare_parameter("default_nav_timeout", 60.0)       # 导航超时时间(s)
+        self.declare_parameter("approved_script_version", "1.1")  # 审核通过的讲稿版本
+        self.declare_parameter("default_motion_lead_s", 3.0)      # cue 步骤未显式写 lead_s 时，动作相对语音的默认提前量(s)
 
         self._cfg_file = self.get_parameter("config_file").value
         if not self._cfg_file:
@@ -76,21 +82,21 @@ class GreetingOrchestrator(Node):
         self._running_states = set(BASE_RUNNING_STATES)
         self._load_script_or_fail(self._cfg_file)
 
-        self._state = "IDLE"
-        self._seg_idx = -1
-        self._step_idx = 0
-        self._paused = False
+        self._state = "IDLE"  # 状态机当前状态
+        self._seg_idx = -1    # 当前执行的段索引，-1 表示未开始
+        self._step_idx = 0    # 当前执行的步骤索引，0 表示段开始
+        self._paused = False  # 是否暂停执行
         #: goto 点播模式：播完该段即回 IDLE，不续播下一段（遥控器"一段一键"用）
-        self._single_segment = False
+        self._single_segment = False  # goto 点播模式：播完该段即回 IDLE，不续播下一段（遥控器"一段一键"用）
         self._pending = None          # 单步: {'kind','stage','future','label'}；cue: 复合结构
         self._goal_handle = None
         self._cue_timer = None        # cue 里"延迟下发语音"的一次性定时器
-        self._missing_logged = set()
+        self._missing_logged = set()  # 已记录的缺失事件（如导航超时）
         self._default_motion_lead_s = float(
             self.get_parameter("default_motion_lead_s").value
         )
 
-        # ---- /greeting/state: reliable + transient_local / depth 1（契约 §8）----
+        # ---- /greeting/state: reliable + transient_local / depth 1（状态机状态发布）----
         state_qos = QoSProfile(
             depth=1,
             history=HistoryPolicy.KEEP_LAST,
@@ -102,7 +108,7 @@ class GreetingOrchestrator(Node):
         )
         self._health_pub = self.create_publisher(SubsystemHealth, "/greeting/health", 10)
 
-        # ---- 订阅（QoS 按契约 §8 显式声明，禁止依赖默认值）----
+        # ---- 订阅（控制指令、事件、意图、感知到的人）----
         reliable10 = QoSProfile(depth=10, reliability=ReliabilityPolicy.RELIABLE)
         self.create_subscription(
             ConsoleCommand, "/greeting/control_cmd", self._on_cmd, reliable10
@@ -125,17 +131,17 @@ class GreetingOrchestrator(Node):
         self.create_service(GreetingControl, "/greeting/control", self._on_srv)
         self.create_service(GreetingControl, "/greeting/reload_script", self._on_reload)
 
-        self.create_timer(0.5, self._tick)
-        self.create_timer(1.0, self._publish_health)
+        self.create_timer(0.5, self._tick)           # 状态机更新定时器
+        self.create_timer(1.0, self._publish_health) # 健康状态发布定时器
 
-        self._publish_state()
+        self._publish_state()                        # 初始化状态发布
         self.get_logger().info(
             f"编排层就绪：讲稿 {len(self._segments)} 段，"
             f"等待 /greeting/control_cmd 下发 start"
         )
 
-    # ------------------------------------------------------------------ 配置
     def _load_script_or_fail(self, path: str) -> None:
+        """加载讲稿文件，失败则退出节点"""
         self._segments = []
         ok, text = self._load_script(path)
         if ok:
@@ -144,6 +150,9 @@ class GreetingOrchestrator(Node):
             self.get_logger().error(text)
 
     def _load_script(self, path: str) -> tuple[bool, str]:
+        """加载讲稿文件，返回是否成功、成功则讲稿版本号、失败则错误信息"""
+        # L5 内容守护：校验结果供 /greeting/health 的 script_version_ok 上报
+        self._script_version_ok = False
         try:
             data = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
         except Exception as exc:  # noqa: BLE001
@@ -158,40 +167,73 @@ class GreetingOrchestrator(Node):
         self._running_states = set(BASE_RUNNING_STATES) | {
             str(seg.get("name", "")).upper() for seg in self._segments
         }
+        self._script_version_ok = True
         return True, f"讲稿已加载，版本 {version}，共 {len(self._segments)} 段"
 
-    # ------------------------------------------------------------ 状态发布
+    # ------------------------------------------------------------ 状态机
     def _publish_state(self) -> None:
+        """发布当前状态"""
         self._state_pub.publish(String(data=self._state))
 
     def _set_state(self, state: str) -> None:
+        """设置当前状态"""
         if state != self._state:
             self.get_logger().info(f"状态切换: {self._state} -> {state}")
             self._state = state
             self._publish_state()
 
     def _publish_health(self) -> None:
+        """发布当前健康状态（实机自检）。
+
+        实机信号来源（对应规划方案 §7.7 的分层守护）：
+          · L1 本体守护：``/robot_state`` 有发布者 ⇔ robot_control 进程存活。
+            该进程会静默退出，届时命令发出去毫无反应且无报错，必须能看出来。
+          · L2 通道守护：``/arm/cmd`` 有订阅者 ⇔ 命令不会被静默丢弃（动作门禁）。
+          · L4 语音守护：``/greeting/speak`` 服务端在线（TTS 链路入口可用）。
+          · L5 内容守护：讲稿版本与审核版本比对结果（加载/重载时给出）。
+          · L3 底盘 / L6 DTC：当前 autostart 链路未接入底盘 REST 监测，
+            按"未监测"上报，以 detail 的 ``chassis=unmonitored`` 为准。
+        """
+        # 一次性统计缺订阅者的本体通道（detail 里逐个列出，便于现场定位）
+        missing = [t for t in BODY_CMD_TOPICS if self.count_subscribers(t) < 1]
+
         msg = SubsystemHealth()
         msg.header.stamp = self.get_clock().now().to_msg()
         msg.header.frame_id = ""
-        msg.robot_control_alive = True
-        # 仿真下用三个动作服务端是否在线，代替实机的本体/底盘/音频自检
-        msg.arm_cmd_has_subscriber = self._motion.server_is_ready()
-        msg.chassis_rest_ok = self._nav.server_is_ready()
+        # L1：robot_control 存活 ⇔ /robot_state 有发布者（未上电/退出即无发布者）
+        msg.robot_control_alive = self.count_publishers(ROBOT_STATE_TOPIC) >= 1
+        # L2：动作门禁通道 /arm/cmd 必须有订阅者
+        msg.arm_cmd_has_subscriber = ARM_CMD_TOPIC not in missing
+        # L4：语音链路入口（speak 服务端）在线
         msg.audio_ok = self._speak.server_is_ready()
-        msg.script_version_ok = True
+        # L5：讲稿版本校验结果
+        msg.script_version_ok = self._script_version_ok
+        # L3 / L6：底盘未接入监测，保守上报"未监测"（不冒充正常）
+        msg.chassis_rest_ok = False
         msg.slam_status = 0
         msg.dtc_level = 0
-        msg.detail = "sim: orchestrator health"
+        msg.detail = self._health_detail(msg, missing)
         self._health_pub.publish(msg)
 
-    # ------------------------------------------------------------ 指令入口
+    def _health_detail(self, msg: SubsystemHealth, missing: list) -> str:
+        """拼装人类可读的健康摘要，列出缺失通道，便于现场一眼定位。"""
+        return (
+            f"real: body={'ok' if msg.robot_control_alive else 'no_publisher'}"
+            f" audio={'ok' if msg.audio_ok else 'speak_server_offline'}"
+            f" script={'ok' if msg.script_version_ok else 'version_mismatch'}"
+            f" channels={'ok' if not missing else 'missing[' + ','.join(missing) + ']'}"
+            " chassis=unmonitored"
+        )
+
+    # ------------------------------------------------------------ 指令机
     def _on_cmd(self, msg: ConsoleCommand) -> None:
+        """处理指令"""
         ok, text = self._handle_command(msg.cmd.strip(), msg.arg.strip())
         if not ok:
             self.get_logger().warn(f"[cmd:{msg.cmd}] {text}")
 
     def _on_srv(self, request: GreetingControl.Request, response: GreetingControl.Response):
+        """处理指令"""
         ok, text = self._handle_command(request.cmd.strip(), request.arg.strip())
         response.success = ok
         response.message = text
@@ -199,6 +241,7 @@ class GreetingOrchestrator(Node):
         return response
 
     def _on_reload(self, request: GreetingControl.Request, response: GreetingControl.Response):
+        """重载讲稿"""
         ok, text = self._load_script(self._cfg_file)
         response.success = ok
         response.message = text
@@ -206,10 +249,12 @@ class GreetingOrchestrator(Node):
         return response
 
     def _state_descriptor(self) -> str:
+        """拼装人类可读的当前状态描述，列出缺失通道，便于现场一眼定位。"""
         seg_no = self._seg_idx + 1 if self._seg_idx >= 0 else 0
         return f"{self._state}:seg={seg_no}/step={self._step_idx}"
 
     def _handle_command(self, cmd: str, arg: str) -> tuple[bool, str]:
+        """处理指令"""
         if cmd == "start":
             self._single_segment = False
             self._start_segment(0)
@@ -257,6 +302,7 @@ class GreetingOrchestrator(Node):
 
     # ------------------------------------------------------------ 事件/感知
     def _on_event(self, msg: GreetingEvent) -> None:
+        """处理事件"""
         if msg.event_type == GreetingEvent.EVENT_MANUAL_START:
             self._single_segment = False
             self._start_segment(0)
@@ -265,11 +311,12 @@ class GreetingOrchestrator(Node):
             self._set_state("IDLE")
         elif msg.event_type == GreetingEvent.EVENT_LEADER_ARRIVED:
             # 契约 §5.1：仅提示，不自动接待
-            self.get_logger().info(f"领导就位提示（距离 {msg.distance_m:.2f} m），等待人工 start")
+            self.get_logger().info(f"人员就位提示（距离 {msg.distance_m:.2f} m），等待人工 start")
         elif msg.event_type == GreetingEvent.EVENT_LEADER_LEAVE:
-            self.get_logger().info("领导离场提示")
+            self.get_logger().info("人员离场提示")
 
     def _on_person(self, msg: PersonDetection) -> None:
+        """处理人员检测"""
         if msg.detected:
             self.get_logger().debug(
                 f"感知到人员: 距离 {msg.distance_m:.2f} m 方位 {msg.bearing_rad:.2f} rad "
@@ -277,11 +324,12 @@ class GreetingOrchestrator(Node):
             )
 
     def _on_intent(self, msg: GreetingIntent) -> None:
-        # 契约 §6：slot_json 只填槽位、不生成文案。这里仅记录，讲稿由审核版本提供。
+        """处理意图"""
         self.get_logger().info(f"收到意图 {msg.intent!r} 槽位 {msg.slot_json!r}")
 
     # ------------------------------------------------------------ 段/步推进
     def _start_segment(self, idx: int) -> None:
+        """开始第 idx 段"""
         if not self._segments:
             self._set_state("IDLE")
             return
@@ -297,11 +345,13 @@ class GreetingOrchestrator(Node):
         )
 
     def _resume_state(self) -> None:
+        """恢复状态"""
         if 0 <= self._seg_idx < len(self._segments):
             seg = self._segments[self._seg_idx]
             self._set_state(str(seg.get("name", f"SEG{self._seg_idx + 1}")).upper())
 
     def _tick(self) -> None:
+        """定时器"""
         if self._state not in self._running_states or self._paused:
             return
         if self._pending is not None:
@@ -310,6 +360,7 @@ class GreetingOrchestrator(Node):
         self._start_next_step()
 
     def _poll_pending(self) -> None:
+        """轮询待办任务"""
         p = self._pending
         if p["kind"] == "cue":
             self._poll_cue(p)
@@ -343,6 +394,7 @@ class GreetingOrchestrator(Node):
         self._advance_step()
 
     def _start_next_step(self) -> None:
+        """开始下一步"""
         seg = self._segments[self._seg_idx]
         steps = seg.get("steps", [])
         if self._step_idx >= len(steps):
@@ -388,6 +440,7 @@ class GreetingOrchestrator(Node):
             self._advance_step()
 
     def _send(self, client: ActionClient, goal, kind: str, label: str) -> None:
+        """下发 Action 目标"""
         self.get_logger().info(f"下发 [{label}]")
         self._pending = {
             "kind": kind,
@@ -449,6 +502,7 @@ class GreetingOrchestrator(Node):
         self.get_logger().info(f"[{p['label']}] 语音已下发")
 
     def _poll_cue(self, p) -> None:
+        """轮询 cue 任务"""
         self._poll_sub(p["motion"])
         if p["speak"] is not None:
             self._poll_sub(p["speak"])
@@ -497,6 +551,7 @@ class GreetingOrchestrator(Node):
         sub["done"] = True
 
     def _log_sub(self, label: str, what: str, sub) -> None:
+        """记录 Action 子任务状态"""
         if sub["rejected"]:
             self.get_logger().warn(f"[{label}] {what}目标被拒绝，继续下一步")
         elif sub["status"] == GoalStatus.STATUS_SUCCEEDED:
@@ -507,17 +562,20 @@ class GreetingOrchestrator(Node):
             )
 
     def _warn_missing(self, server: str) -> None:
+        """警告缺失服务端"""
         if server not in self._missing_logged:
             self._missing_logged.add(server)
             self.get_logger().warn(f"动作服务端 /greeting/{server} 不在线，等待其启动…")
 
     def _advance_step(self) -> None:
+        """推进到下一步"""
         self._step_idx += 1
         seg = self._segments[self._seg_idx]
         if self._step_idx >= len(seg.get("steps", [])):
             self._advance_segment()
 
     def _advance_segment(self) -> None:
+        """推进到下一段"""
         if self._single_segment:
             # goto 点播：本段（动作 + 语音）已结束，不续播下一段
             self.get_logger().info(f"单段点播完成（第 {self._seg_idx + 1} 段），回到 IDLE")
@@ -534,6 +592,7 @@ class GreetingOrchestrator(Node):
             self._set_state("IDLE")
 
     def _abort_pending(self) -> None:
+        """取消待办任务"""
         if self._cue_timer is not None:
             self._cue_timer.cancel()
             self._cue_timer = None

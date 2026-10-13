@@ -7,12 +7,6 @@
 
     动作名 -> (config/joint_map.yaml) -> 电机 ID -> /head/cmd + /arm/cmd + /waist/cmd
 
-与仿真桩 greeting_sim_stubs/play_motion_server.py 的差异：
-    · 执行侧从「一条 JointTrajectory 交给 Gazebo 控制器」换成
-      「≥10 Hz 连续流式下发实机关节帧」（实机命令非一次性生效，必须持续保持）；
-    · 起点取 /robot_state 实测角，先 warmup 保持当前位姿软化 SDK 模式移交，再开始动作；
-    · 每个关节按 URDF <limit> 收缩软限位、单帧增量限幅，腿部永不下发。
-
 参数（见 config/motion_params.yaml 或 launch 内直接给定）：
     motions_file / joint_map_file / publish_rate_hz / speed_limit /
     soft_limit_margin_rad / max_step_rad / warmup_s / warmup_speed /
@@ -110,16 +104,20 @@ class MotionLibrary:
 
     @property
     def home(self) -> Dict[str, float]:
+        """返回 home 中立姿态"""
         return dict(self._home)
 
     @property
     def names(self) -> List[str]:
+        """返回所有动作名称"""
         return list(self._motions)
 
     def __contains__(self, name: str) -> bool:
+        """判断动作是否存在"""
         return name in self._motions
 
     def duration(self, name: str) -> float:
+        """返回动作持续时间"""
         return float(self._motions[name].get("duration", 2.0))
 
     def frames(self, name: str) -> List[Tuple[float, Dict[str, float]]]:
@@ -150,7 +148,7 @@ class MotionServer(Node):
     def __init__(self) -> None:
         super().__init__("greeting_body_motion_server")
         share = Path(get_package_share_directory("greeting_body"))
-
+        # ---- 动作库参数 ----
         self.declare_parameter("motions_file", "")
         self.declare_parameter("joint_map_file", "")
         self.declare_parameter("publish_rate_hz", 50.0)
@@ -168,37 +166,24 @@ class MotionServer(Node):
         self.declare_parameter("head_current", 5.0)
         self.declare_parameter("waist_speed", 0.5)
         self.declare_parameter("waist_current", 5.0)
-        #: 手臂控制模式：0=位置模式(天轶2.5 官方做法，默认) 1=力位混合(仅回退实验用，
-        #: 本机型实测会持续高频啸叫)
         self.declare_parameter("arm_control_mode", 0)
-        #: 臂关节期望相对实测的最大超前量(rad)，防止 Kp 顶死限位粘滑颤振
         self.declare_parameter("max_follow_err_rad", 0.10)
-        #: 力位混合增益/前馈缩放：增益基准取自天工3.0(dex)，本机天轶2.5 电机不同，
-        #: 运动中若持续高频啸叫（电流环极限环），优先下调 arm_kp_scale。
         self.declare_parameter("arm_kp_scale", 1.0)
         self.declare_parameter("arm_kd_scale", 1.0)
         self.declare_parameter("arm_feedforward_scale", 1.0)
-        #: 位置模式运动段 spd = |轨迹瞬时速度| × margin（只略 >1，现场调参主旋钮）
         self.declare_parameter("feedforward_speed_margin", FEEDFORWARD_SPEED_MARGIN)
-        #: 位置模式 spd 绝对下限(rad/s)，必须远小于任何运动段真实速度
         self.declare_parameter("min_feedforward_speed", MIN_FEEDFORWARD_SPEED)
         self.declare_parameter("required_groups", ["arm"])
         self.declare_parameter("robot_state_topic", "/robot_state")
         # ---- 待机扫视（无动作时自动循环 idle_scan_loop；新动作一到立即抢占）----
         self.declare_parameter("idle_scan_enabled", True)
         self.declare_parameter("idle_scan_motion", "idle_scan_loop")
-        #: 最后一个动作结束后静止多久才开扫（给编排层连续段之间留缓冲）
         self.declare_parameter("idle_scan_delay_s", 3.0)
-        #: 扫视速度（同样受 HARD_SPEED_LIMIT 约束）
         self.declare_parameter("idle_scan_speed_scale", 0.5)
-        #: 从实测姿态软过渡到扫视起点的时间(s)，避免开机/外来姿态被瞬间拽回
         self.declare_parameter("idle_scan_entry_s", 1.5)
-        #: H 停在右档（平台简单动作待命/回放，直发关节绕过本服务端）时暂停扫视
         self.declare_parameter("idle_scan_pause_on_h_right", True)
         self.declare_parameter("idle_scan_sbus_topic", "/sbus_data/event")
-        #: F 上拨 + 长按 A = 平台语音功能开/关；开启期间扫视让位并回 home 中立位
         self.declare_parameter("idle_scan_pause_on_voice", True)
-        #: A 长按判定阈值(s)，须与平台 bridge_config 的 long_press_thresholds.a 对齐
         self.declare_parameter("voice_long_press_s", 1.0)
 
         p = self.get_parameter
@@ -313,6 +298,7 @@ class MotionServer(Node):
 
     # ---------------------------------------------------------------- Action 回调
     def _on_goal(self, goal_request) -> GoalResponse:
+        """处理动作目标请求"""
         if goal_request.motion_name not in self._library:
             self.get_logger().warn(
                 f"拒绝目标：未知动作 {goal_request.motion_name!r}，可用 {self._library.names}"
@@ -321,9 +307,11 @@ class MotionServer(Node):
         return GoalResponse.ACCEPT
 
     def _on_cancel(self, _goal_handle) -> CancelResponse:
+        """处理动作取消请求"""
         return CancelResponse.ACCEPT
 
     def _execute(self, goal_handle) -> PlayMotion.Result:
+        """执行动作"""
         name = goal_handle.request.motion_name
         # 抢占待机扫视：先置位让扫视循环尽快让出，再取锁串行化对 BodyAdapter 的写入，
         # 保证「动作」与「扫视」任一时刻只有一个在下发关节帧
@@ -343,23 +331,27 @@ class MotionServer(Node):
 
     # ---------------------------------------------------------------- 占用/扫视互斥
     def _begin_active(self) -> None:
+        """占用待机扫视，防止其他动作抢占"""
         with self._active_lock:
-            self._active_goals += 1
-        self._idle_stop.set()
+            self._active_goals += 1 # 计数，支持并发目标
+        self._idle_stop.set()       # 让扫视循环退出/让位
 
     def _end_active(self) -> None:
+        """释放待机扫视，允许其他动作抢占"""
         with self._active_lock:
             self._active_goals = max(self._active_goals - 1, 0)
             all_done = self._active_goals == 0
-        self._last_motion_end = time.monotonic()
+        self._last_motion_end = time.monotonic()    # 重置"静止计时"，给扫视延迟缓冲
         if all_done:
-            self._idle_stop.clear()
+            self._idle_stop.clear()                 # 全部结束才允许扫视恢复
 
     def _is_active(self) -> bool:
+        """判断是否有动作占用待机扫视"""
         with self._active_lock:
             return self._active_goals > 0
 
     def _run(self, goal_handle, name: str) -> PlayMotion.Result:
+        """执行动作"""
         req = goal_handle.request
         # 服务端是最后一道闸：礼仪动作速度统一钳到 ≤0.7
         speed = min(max(float(req.speed_scale), 0.05), self._speed_limit)
@@ -461,10 +453,10 @@ class MotionServer(Node):
 
     # ---------------------------------------------------------------- 待机扫视
     def _on_sbus(self, msg) -> None:
-        """按键门控：H 三档（右档=平台简单动作） + F上+长按A（语音功能开/关）。"""
+        """按键门控：H 右档 + F上+长按A（语音功能开/关）。"""
         ev = msg.key_event_new
 
-        # -- H 三档 --
+        # -- H 右档 --
         if ev == KEY_H_RIGHT:
             if not self._h_armed:
                 self._h_armed = True
@@ -665,6 +657,7 @@ class MotionServer(Node):
             time.sleep(period)
 
     def destroy_node(self):
+        """销毁节点时，释放待机扫视"""
         self._idle_shutdown.set()
         self._idle_stop.set()
         thread = self._idle_thread
