@@ -24,7 +24,7 @@ cd robot-forge
 git checkout -b feat/add-xxx
 
 # 3) 本地验证（提交前必须过）
-cd packages/reusable_model && python -m pytest -q && cd ../..
+cd packages/robotics_algorithm && python -m pytest -q && cd ../..
 ```
 
 ROS 2 项目的验证（仅当 `projects/` 下存在公开项目时）：在该项目 README 给出的
@@ -67,7 +67,7 @@ PR 模板会自动带上这份清单，请逐条确认：
 - [ ] 新功能带测试，修 bug 带回归测试
 - [ ] 文档已同步（受影响的 README 都改了）
 - [ ] 没有提交绝对路径、私有数据、密钥、`build/` `install/` `log/` 等产物
-- [ ] 本地测试通过（`cd packages/reusable_model && python -m pytest`）
+- [ ] 本地测试通过（`cd packages/robotics_algorithm && python -m pytest`）
 - [ ] 已通过上面的**知识产权自检**
 
 ## 代码规范
