@@ -27,6 +27,8 @@ htmlcov/
 .idea/
 *.swp
 *~
+.trae/
+.gitignore
 
 # --- 数据 / 临时产物 ---
 *.tmp
