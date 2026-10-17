@@ -8,7 +8,7 @@
 
 [![License](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB.svg)](https://www.python.org/)
-[![tests](https://img.shields.io/badge/tests-128%20passed-brightgreen.svg)](packages/reusable_model/tests)
+[![tests](https://img.shields.io/badge/tests-128%20passed-brightgreen.svg)](packages/robotics_algorithm/tests)
 [![CI](https://github.com/CGmoke/robot-forge/actions/workflows/python-ci.yml/badge.svg)](https://github.com/CGmoke/robot-forge/actions/workflows/python-ci.yml)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
@@ -36,7 +36,7 @@ RobotForge 是一个面向机器人软件开发的 **monorepo 骨架 + 可复用
 | 🔌 **与机器人解耦** | `packages/` 下的代码不含绝对路径、不读环境变量、不依赖任何具体机器人的配置 |
 | 🧪 **自动化守护** | 128 个单测 + 三档 Python 版本的 CI，每个模块附带可执行 doctest |
 
-## 🧩 当前主要内容：`reusable_model`
+## 🧩 当前主要内容：`robotics_algorithm`
 
 从真实机器人项目中沉淀出来的 Python 构建块。**硬依赖只有 `numpy`**，
 重型依赖（OpenCV / pyserial / PyYAML）一律惰性导入 —— 不装也能用其余部分。
@@ -52,13 +52,13 @@ RobotForge 是一个面向机器人软件开发的 **monorepo 骨架 + 可复用
 | `hardware` | 依据 udev 标识 / 序列号 / 主动探测查找串口设备、Modbus RTU 并联夹爪客户端（内置 Robotiq 2F 档位，支持空跑） |
 | `runtime` | 父子解释器之间基于行的通信桥接、ctypes 库查找与 `RTLD_GLOBAL` 预加载、噪声输出流过滤 |
 
-完整模块索引见 [`packages/reusable_model/README.md`](packages/reusable_model/README.md)。
+完整模块索引见 [`packages/robotics_algorithm/README.md`](packages/robotics_algorithm/README.md)。
 
 ## 🚀 快速开始
 
 ```bash
 git clone https://github.com/CGmoke/robot-forge.git
-cd robot-forge/packages/reusable_model
+cd robot-forge/packages/robotics_algorithm
 python -m pip install -e ".[test]"
 python -m pytest          # 期望 128 passed
 ```
@@ -66,8 +66,8 @@ python -m pytest          # 期望 128 passed
 30 秒上手：
 
 ```python
-from reusable_model.geometry.boxes import iou
-from reusable_model.tracking.iou_tracker import IoUTracker
+from robotics_algorithm.geometry.boxes import iou
+from robotics_algorithm.tracking.iou_tracker import IoUTracker
 
 tracker = IoUTracker(min_hits=1)
 frame = tracker.update([{"bbox": [0, 0, 10, 10], "label": "person"}])
@@ -77,7 +77,7 @@ print(frame[0]["track_id"], iou([0, 0, 10, 10], [2, 2, 12, 12]))
 不安装也能用 —— 把 `src/` 加进 `PYTHONPATH` 即可：
 
 ```bash
-PYTHONPATH=src python -c "from reusable_model.geometry.boxes import iou; print(iou([0,0,10,10],[2,2,12,12]))"
+PYTHONPATH=src python -c "from robotics_algorithm.geometry.boxes import iou; print(iou([0,0,10,10],[2,2,12,12]))"
 ```
 
 ## 🧱 仓库结构
@@ -94,10 +94,10 @@ robot-forge/
 ├── projects/                  # 机器人工程项目（公开目录；当前只有约定说明）
 │   └── README.md              # 目录约定、什么能放 / 什么不能放
 └── packages/                  # 跨项目复用的库
-    └── reusable_model/        # src 布局的 Python 包
+    └── robotics_algorithm/        # src 布局的 Python 包
         ├── README.md
         ├── pyproject.toml
-        ├── src/reusable_model/   # geometry / gridmap / motion / vision / io / tracking / hardware / runtime
+        ├── src/robotics_algorithm/   # geometry / gridmap / motion / vision / io / tracking / hardware / runtime
         └── tests/                # 128 个单测
 ```
 
@@ -116,7 +116,7 @@ robot-forge/
 
 | 文档 | 内容 |
 | --- | --- |
-| [`packages/reusable_model/README.md`](packages/reusable_model/README.md) | 复用库的模块索引、安装方式与 API 概览 |
+| [`packages/robotics_algorithm/README.md`](packages/robotics_algorithm/README.md) | 复用库的模块索引、安装方式与 API 概览 |
 | [`projects/README.md`](projects/README.md) | `projects/` 的目录约定、可放 / 不可放内容的对照表 |
 | [`docs/adding-a-project.md`](docs/adding-a-project.md) | 新增机器人项目的目录规范、README 模板与接入自检清单（含知识产权） |
 | [`.github`](.github/) | 提交前会跑什么、issue / PR 怎么写 |
@@ -125,7 +125,7 @@ robot-forge/
 
 见 [CHANGELOG.md](CHANGELOG.md) 了解已完成的内容。近期方向：
 
-- [ ] **v0.2**：`reusable_model` 发布到 PyPI，补齐类型标注与 API 文档
+- [ ] **v0.2**：`robotics_algorithm` 发布到 PyPI，补齐类型标注与 API 文档
 - [ ] 继续把内部项目中的通用部分下沉到 `packages/`
 - [ ] 补充性能基准与更多 doctest 示例
 - [ ] 英文文档与英文 README 完整版

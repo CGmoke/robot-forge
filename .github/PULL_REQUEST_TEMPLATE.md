@@ -1,4 +1,4 @@
-<!-- 标题建议：<类型>(<范围>): <一句话>   例如：fix(reusable_model): 修复 gridmap 距离场边界越界 -->
+<!-- 标题建议：<类型>(<范围>): <一句话>   例如：fix(robotics_algorithm): 修复 gridmap 距离场边界越界 -->
 
 ## 这个 PR 做了什么
 
@@ -25,7 +25,7 @@
 
 ## 检查清单
 
-- [ ] 本地测试通过（`cd packages/reusable_model && python -m pytest`）
+- [ ] 本地测试通过（`cd packages/robotics_algorithm && python -m pytest`）
 - [ ] ROS 2 改动已 `colcon build` 通过，且启动过相关 launch
 - [ ] 新功能带测试；修 bug 带能复现原问题的回归测试
 - [ ] 受影响的 README / 文档已同步更新

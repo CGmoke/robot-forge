@@ -4,11 +4,11 @@ on:
   push:
     branches: [main]
     paths:
-      - 'packages/reusable_model/**'
+      - 'packages/robotics_algorithm/**'
       - '.github/workflows/python-ci.yml'
   pull_request:
     paths:
-      - 'packages/reusable_model/**'
+      - 'packages/robotics_algorithm/**'
       - '.github/workflows/python-ci.yml'
   workflow_dispatch:
 
@@ -22,7 +22,7 @@ jobs:
         python-version: ['3.10', '3.11', '3.12']
     defaults:
       run:
-        working-directory: packages/reusable_model
+        working-directory: packages/robotics_algorithm
     steps:
       - uses: actions/checkout@v4
 
@@ -41,6 +41,6 @@ jobs:
       - name: 校验源码可导入（模拟未安装可选依赖的用户）
         run: |
           python - <<'PY'
-          import reusable_model, reusable_model.geometry.rotations3d
-          print("reusable_model", reusable_model.__version__, "ok")
+          import robotics_algorithm, robotics_algorithm.geometry.rotations3d
+          print("robotics_algorithm", robotics_algorithm.__version__, "ok")
           PY

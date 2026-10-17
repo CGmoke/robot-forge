@@ -1,0 +1,30 @@
+"""robotics_algorithm —— 从机器人项目中抽取的可复用 Python 构建块。
+
+本包汇集了一批通用、自包含的 Python 模块，它们来自多个机器人工程
+（行为编排、自定义导航、开放词汇感知与机械臂控制）。每个模块都满足：
+
+* 仅依赖标准库与 :mod:`numpy`（可选的重型依赖在用到时才惰性导入）；
+* 与来源项目解耦 —— 不包含绝对路径、不读取环境变量、不依赖项目专属配置；
+* 在边界处校验输入，并以 参数/返回/异常 格式的 docstring 描述其 API。
+
+按功能划分的目录结构：
+
+* :mod:`robotics_algorithm.geometry` —— 3D 旋转、边界框；
+* :mod:`robotics_algorithm.gridmap` —— 占据栅格、连通区域、距离场；
+* :mod:`robotics_algorithm.motion` —— 平面逆运动学、运动学速度曲线；
+* :mod:`robotics_algorithm.vision` —— 针孔相机、深度采样、点云、平面；
+* :mod:`robotics_algorithm.io` —— YAML 配置、NPZ 检测负载、二进制信封；
+* :mod:`robotics_algorithm.tracking` —— IoU 多目标跟踪、稳定连续帧门限；
+* :mod:`robotics_algorithm.hardware` —— 串口发现、Modbus 夹爪；
+* :mod:`robotics_algorithm.runtime` —— 子进程桥接、ctypes 加载、输出流过滤。
+
+# 快速开始
+使用 ``import robotics_algorithm.geometry.rotations3d``（或更短的 ``from robotics_algorithm.geometry
+import rotations3d``）即可开始。
+"""
+
+from __future__ import annotations
+
+__version__ = "0.1.0"
+
+__all__ = ["__version__"]

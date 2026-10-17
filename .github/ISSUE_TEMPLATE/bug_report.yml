@@ -14,7 +14,7 @@ body:
     attributes:
       label: 涉及哪个部分
       options:
-        - packages/reusable_model（Python 复用库）
+        - packages/robotics_algorithm（Python 复用库）
         - 仓库本身（文档 / CI / 结构）
         - 其他
     validations:
@@ -39,7 +39,7 @@ body:
       render: bash
       placeholder: |
         git clone https://github.com/CGmoke/robot-forge.git
-        cd robot-forge/packages/reusable_model
+        cd robot-forge/packages/robotics_algorithm
         python -m pip install -e ".[test]"
         python -m pytest tests/test_gridmap.py -x
     validations:
