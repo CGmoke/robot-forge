@@ -5,7 +5,7 @@
 
 > 讲稿剧本：[greeting_orchestrator/config/greeting_script.yaml](src/greeting_orchestrator/config/greeting_script.yaml)
 
-> 台词原文：[大会流程.md](大会流程.md)　
+> 台词原文：内部资料，不随仓库发布（见 orchestrator 的配置与使用说明）　
 
 >动作库：[greeting_body/config/motions.yaml](src/greeting_body/config/motions.yaml)
 
@@ -374,9 +374,9 @@ kill <PID> [<PID> ...]
 
 | 文档 | 内容 |
 | --- | --- |
-| [大会流程.md](大会流程.md) | 讲稿原文（动作提示 + 台词） |
-| [接口契约冻结表.md](接口契约冻结表.md) | 话题 / 服务 / Action 接口与安全约定 |
-| [多人协作开发规范.md](多人协作开发规范.md) | 分工与协作约定 |
+| 内部资料 | 讲稿原文（动作提示 + 台词）不随仓库发布 |
+| [接口契约冻结表.md](../接口契约冻结表.md) | 话题 / 服务 / Action 接口与安全约定 |
+| 内部资料 | 分工与协作约定，不随仓库发布 |
 | [greeting_orchestrator/README.md](src/greeting_orchestrator/README.md) | 编排层（讲稿格式、`cue` 步骤、参数） |
 | [greeting_body/README.md](src/greeting_body/README.md) | 实机上半身动作服务端 |
 | [greeting_nav/README.md](src/greeting_nav/README.md) | 实机底盘 REST 导航服务端 |

@@ -422,5 +422,5 @@ ros2 action send_goal /greeting/navigate_to greeting_interfaces/action/NavigateT
 
 ## 7. 相关文档
 
-- [《接口契约冻结表》v1.0](../../接口契约冻结表.md)
-- [《酒店迎宾项目规划方案》](../../酒店迎宾项目规划方案.md)
+- [《接口契约冻结表》v1.0](../../../接口契约冻结表.md)
+- 《酒店迎宾项目规划方案》（内部资料，不随仓库发布）

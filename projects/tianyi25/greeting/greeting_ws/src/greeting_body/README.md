@@ -404,7 +404,7 @@ colcon build --packages-select greeting_body --symlink-install && source install
 
 ## 11. 相关文档
 
-- [《接口契约冻结表》v1.0](../../接口契约冻结表.md) §5 / §7.1
-- [《酒店迎宾项目规划方案》](../../酒店迎宾项目规划方案.md)
+- [《接口契约冻结表》v1.0](../../../接口契约冻结表.md) §5 / §7.1
+- 《酒店迎宾项目规划方案》（内部资料，不随仓库发布）
 - [greeting_interfaces/README.md](../greeting_interfaces/README.md)（`PlayMotion` 接口定义）
 - [greeting_orchestrator/README.md](../greeting_orchestrator/README.md)（动作的唯一调用方）

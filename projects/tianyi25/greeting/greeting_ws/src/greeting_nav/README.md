@@ -367,7 +367,7 @@ python3 -c "from greeting_nav.chassis_client import ChassisClient; c=ChassisClie
 
 ## 11. 相关文档
 
-- [《接口契约冻结表》v1.0](../../接口契约冻结表.md) §5 / §7.6
-- [《酒店迎宾项目规划方案》](../../酒店迎宾项目规划方案.md) §3.3 / §7.6
+- [《接口契约冻结表》v1.0](../../../接口契约冻结表.md) §5 / §7.6
+- 《酒店迎宾项目规划方案》（内部资料，不随仓库发布） §3.3 / §7.6
 - [greeting_interfaces/README.md](../greeting_interfaces/README.md)（`NavigateTo` 接口定义）
 - [greeting_orchestrator/README.md](../greeting_orchestrator/README.md)（导航的唯一调用方）

@@ -1,0 +1,44 @@
+# NOTICE · 版权与来源声明
+
+## 1. 本仓库内容均为原创
+
+RobotForge 仓库中的代码与文档 —— 包括 `packages/robotics_algorithm` 的 Python 库、
+`projects/tianyi25/greeting` 的 ROS 2 迎宾工程、全部 README 与协作文档、
+CI 与社区配置 —— **均为本项目作者原创**，采用 [Apache License 2.0](LICENSE)。
+
+本仓库**不包含**以下内容：
+
+- ❌ 机器人厂商交付的 URDF / STL / CAD / 网格模型文件
+- ❌ 从厂商 SDK 中拷出的二进制库或模型资源
+- ❌ 公司内部代码、配置、密钥或客户数据
+- ❌ 许可证不明的第三方代码、模型或数据集
+
+## 2. 关于厂商平台依赖
+
+`projects/tianyi25/greeting` 是一个**实机**工程，它依赖机器人厂商随设备提供的
+运行时环境（如 `/opt/ros/jazzy` 之外的平台 `setup.bash`、`ros2_bridge_msgs`、
+`bodyctrl_msgs` 等消息包）。这些依赖**只被引用、不被包含**在本仓库中，
+需要使用者自行向设备提供方获取。相关包名的权利属于各自权利人。
+
+本仓库对该平台不包含任何模型资产，也不主张任何与厂商名称相关的权利。
+
+## 3. 第三方软件依赖
+
+本项目使用但不包含以下第三方软件，它们各自遵循其自身许可：
+
+| 依赖 | 许可 |
+| --- | --- |
+| NumPy | BSD-3-Clause |
+| PyYAML | MIT |
+| pytest | MIT |
+| opencv-python-headless（可选） | Apache-2.0 |
+| pyarrow（可选） | Apache-2.0 |
+| pyserial（可选） | BSD-3-Clause |
+| minimalmodbus（可选） | Apache-2.0 |
+
+ROS 2（Jazzy）为 Apache-2.0，同样不作为本仓库内容分发。
+
+## 4. 如果你认为本仓库侵犯了你的权益
+
+请通过仓库 [Issues](https://github.com/CGmoke/robot-forge/issues) 或仓库维护者邮箱联系，
+我们会在核实后**立即处理**。

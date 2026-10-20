@@ -360,6 +360,6 @@ ros2 action send_goal /greeting/play_motion greeting_interfaces/action/PlayMotio
 
 ## 9. 相关文档
 
-- [《接口契约冻结表》v1.2](../../接口契约冻结表.md) §1 / §3 / §5 / §6 / §8 / §10
-- [《酒店迎宾项目规划方案》](../../酒店迎宾项目规划方案.md) §7.7（健康守护分层，见 §4.6）
+- [《接口契约冻结表》v1.2](../../../接口契约冻结表.md) §1 / §3 / §5 / §6 / §8 / §10
+- 《酒店迎宾项目规划方案》（内部资料，不随仓库发布） §7.7（健康守护分层，见 §4.6）
 - [greeting_interfaces/README.md](../greeting_interfaces/README.md)

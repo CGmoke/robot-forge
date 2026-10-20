@@ -458,7 +458,7 @@ ros2 topic echo /greeting/panel_command
 
 ## 11. 相关文档
 
-- [《接口契约冻结表》v1.0](../../接口契约冻结表.md) §2 T2 / §8
+- [《接口契约冻结表》v1.0](../../../接口契约冻结表.md) §2 T2 / §8
 - [greeting_orchestrator/README.md](../greeting_orchestrator/README.md)（命令的消费方）
 - [greeting_body/README.md](../greeting_body/README.md)（`motion:<动作名>` 的动作表来源）
 - [greeting_nav/README.md](../greeting_nav/README.md)（导航动作服务端）

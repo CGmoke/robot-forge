@@ -42,17 +42,19 @@ ros2 topic echo /greeting/state
 ## 2. 目录结构
 
 ```
-greeting_ws/
-├── src/
-│   ├── greeting_interfaces/     # ① 接口（msg/srv/action），依赖图最底层
-│   ├── greeting_body/           # ② 实机上半身动作服务端（/greeting/play_motion）
-│   ├── greeting_nav/            # ③ 实机底盘 REST 导航服务端（/greeting/navigate_to）
-│   ├── greeting_voice/          # ④ 语音（/greeting/speak + 遥控 TTS 播报）
-│   ├── greeting_teleop/         # ⑤ 手柄（SBUS）按键网关 + 动作/流程命令桥
-│   └── greeting_orchestrator/   # ⑥ 迎宾状态机（唯一指挥者）
-├── 多人协作开发规范.md
-├── 接口契约冻结表.md
-└── 酒店迎宾项目规划方案.md
+projects/tianyi25/greeting/
+├── README.md                    # 项目总览（本文件）
+├── 接口契约冻结表.md              # 接口的唯一事实来源（公开版，内网地址已脱敏）
+└── greeting_ws/                 # ROS 2 工作空间
+    ├── README.md                # 实机操作指南（编译 / 启动 / 触发 / 调试）
+    ├── scripts/                 # systemd 开机自启（greeting_autostart.sh + .service）
+    └── src/
+        ├── greeting_interfaces/     # ① 接口（msg/srv/action），依赖图最底层
+        ├── greeting_body/           # ② 实机上半身动作服务端（/greeting/play_motion）
+        ├── greeting_nav/            # ③ 实机底盘 REST 导航服务端（/greeting/navigate_to）
+        ├── greeting_voice/          # ④ 语音（/greeting/speak + 遥控 TTS 播报）
+        ├── greeting_teleop/         # ⑤ 手柄（SBUS）按键网关 + 动作/流程命令桥
+        └── greeting_orchestrator/   # ⑥ 迎宾状态机（唯一指挥者）
 ```
 
 ---
@@ -187,19 +189,18 @@ source /home/nvidia/xos/setup.bash
 | 文档 | 内容 |
 | --- | --- |
 | [接口契约冻结表.md](./接口契约冻结表.md) | **唯一事实来源**：接口名/字段/QoS/语义/状态机（改名或加字段须走契约变更流程） |
-| [酒店迎宾项目规划方案.md](./酒店迎宾项目规划方案.md) | 场景、系统架构、阶段规划 |
-| [多人协作开发规范.md](./多人协作开发规范.md) | 分工、协作流程、契约变更四步 |
+| [greeting_ws/README.md](./greeting_ws/README.md) | 实机操作指南：环境、编译、启动、一键触发、调试 |
 
 ### 各包 README
 
 | 包 | 文档 |
 | --- | --- |
-| `greeting_interfaces` | [README](./src/greeting_interfaces/README.md) |
-| `greeting_body` | [README](./src/greeting_body/README.md) |
-| `greeting_nav` | [README](./src/greeting_nav/README.md) |
-| `greeting_voice` | [README](./src/greeting_voice/README.md) |
-| `greeting_teleop` | [README](./src/greeting_teleop/README.md) |
-| `greeting_orchestrator` | [README](./src/greeting_orchestrator/README.md) |
+| `greeting_interfaces` | [README](./greeting_ws/src/greeting_interfaces/README.md) |
+| `greeting_body` | [README](./greeting_ws/src/greeting_body/README.md) |
+| `greeting_nav` | [README](./greeting_ws/src/greeting_nav/README.md) |
+| `greeting_voice` | [README](./greeting_ws/src/greeting_voice/README.md) |
+| `greeting_teleop` | [README](./greeting_ws/src/greeting_teleop/README.md) |
+| `greeting_orchestrator` | [README](./greeting_ws/src/greeting_orchestrator/README.md) |
 
 ---
 
