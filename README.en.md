@@ -175,6 +175,14 @@ Any form of participation is welcome: bug reports, documentation fixes, tests, n
 - **Adding a project?** Start with [docs/adding-a-project.md](docs/adding-a-project.md) — especially the IP self-check
 - Not sure whether something is worth doing? Open an [Issue](https://github.com/CGmoke/robot-forge/issues) first and we will figure it out together
 
+## ⭐ If it helped you
+
+A **star** is the most direct way to support this project: it costs nothing, but it makes
+RobotForge easier to find and keeps the maintainers motivated to keep pulling reusable
+pieces out of the real-robot work.
+
+[![Star this repo](https://img.shields.io/badge/%E2%AD%90_Star_this_repo-blue?style=flat-square)](https://github.com/CGmoke/robot-forge/stargazers)
+
 ## License
 
 [Apache License 2.0](LICENSE). Everything in this repository is original work and contains no

@@ -169,6 +169,13 @@ robot-forge/
 - **加新项目**请先看 [docs/adding-a-project.md](docs/adding-a-project.md) —— 特别是知识产权自检
 - 不确定要不要做，先开个 [Issue](https://github.com/CGmoke/robot-forge/issues) 聊，避免白写
 
+## ⭐ 如果它帮到了你
+
+点个 **Star** 是最直接的支持 —— 不改变任何代码，但能让更多人搜到 RobotForge，
+也让维护者有动力继续把实机工程里可复用的部分下沉成库。
+
+[![Star this repo](https://img.shields.io/badge/%E2%AD%90_Star_this_repo-blue?style=flat-square)](https://github.com/CGmoke/robot-forge/stargazers)
+
 ## 📄 协议
 
 本项目采用 [Apache License 2.0](LICENSE)。仓库内容均为原创、不含第三方资产，详见 [NOTICE](NOTICE)。
